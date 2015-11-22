@@ -8,9 +8,8 @@
 
 import json
 import requests
+from requests.auth import _basic_auth_str
 from requests_oauthlib import OAuth2Session
-from urlparse import urlparse
-from base64   import b64encode as enc64
 
 HARVEST_STATUS_URL = 'http://www.harveststatus.com/api/v2/status.json'
 
@@ -22,9 +21,6 @@ class HarvestError(Exception):
 class Harvest(object):
     def __init__(self, uri, email=None, password=None, client_id=None, token=None, put_auth_in_header=True):
         self.__uri = uri.rstrip('/')
-        parsed = urlparse(uri)
-        if not (parsed.scheme and parsed.netloc):
-            raise HarvestError('Invalid harvest uri "{0}".'.format(uri))
 
         self.__headers = {
             'Content-Type'  : 'application/json',
@@ -36,7 +32,7 @@ class Harvest(object):
             self.__email    = email.strip()
             self.__password = password
             if put_auth_in_header:
-                self.__headers['Authorization'] = 'Basic {0}'.format(enc64('{self.email}:{self.password}'.format(self=self)))
+                self.__headers['Authorization'] = _basic_auth_str(self.email, self.password)
         elif client_id and token:
             self.__auth         = 'OAuth2'
             self.__client_id    = client_id
@@ -303,7 +299,7 @@ class Harvest(object):
                 except:
                     return resp
             return resp
-        except Exception, e:
+        except Exception as e:
             raise HarvestError(e)
 
 
